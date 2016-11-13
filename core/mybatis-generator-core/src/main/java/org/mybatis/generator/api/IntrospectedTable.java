@@ -1,19 +1,18 @@
-/*
- *  Copyright 2006 The Apache Software Foundation
+/**
+ *    Copyright 2006-2016 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *       http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
-
 package org.mybatis.generator.api;
 
 import static org.mybatis.generator.internal.util.StringUtility.isTrue;
@@ -57,8 +56,8 @@ public abstract class IntrospectedTable {
         
         /** The IBATI s2. */
         IBATIS2, 
- /** The MYBATI s3. */
- MYBATIS3
+        /** The MYBATI s3. */
+        MYBATIS3
     }
 
     /**
@@ -210,6 +209,16 @@ public abstract class IntrospectedTable {
 
     /** Internal attributes are used to store commonly accessed items by all code generators. */
     protected Map<IntrospectedTable.InternalAttribute, String> internalAttributes;
+    
+    /**
+     * Table remarks retrieved from database metadata
+     */
+    protected String remarks;
+    
+    /**
+     * Table type retrieved from database metadata
+     */
+    protected String tableType;
 
     /**
      * Instantiates a new introspected table.
@@ -1268,7 +1277,7 @@ public abstract class IntrospectedTable {
             sb.append(config.getTargetPackage());
         }
 
-        sb.append(fullyQualifiedTable.getSubPackage(isSubPackagesEnabled(config)));
+        sb.append(fullyQualifiedTable.getSubPackageForClientOrSqlMap(isSubPackagesEnabled(config)));
 
         return sb.toString();
     }
@@ -1299,7 +1308,7 @@ public abstract class IntrospectedTable {
         StringBuilder sb = new StringBuilder();
         sb.append(config.getTargetPackage());
 
-        sb.append(fullyQualifiedTable.getSubPackage(isSubPackagesEnabled(config)));
+        sb.append(fullyQualifiedTable.getSubPackageForClientOrSqlMap(isSubPackagesEnabled(config)));
 
         return sb.toString();
     }
@@ -1329,15 +1338,23 @@ public abstract class IntrospectedTable {
         sb.setLength(0);
         sb.append(calculateJavaClientInterfacePackage());
         sb.append('.');
-        sb.append(fullyQualifiedTable.getDomainObjectName());
-        sb.append("Mapper"); //$NON-NLS-1$
+        if (stringHasValue(tableConfiguration.getMapperName())) {
+            sb.append(tableConfiguration.getMapperName());
+        } else {
+            sb.append(fullyQualifiedTable.getDomainObjectName());
+            sb.append("Mapper"); //$NON-NLS-1$
+        }
         setMyBatis3JavaMapperType(sb.toString());
 
         sb.setLength(0);
         sb.append(calculateJavaClientInterfacePackage());
         sb.append('.');
-        sb.append(fullyQualifiedTable.getDomainObjectName());
-        sb.append("SqlProvider"); //$NON-NLS-1$
+        if (stringHasValue(tableConfiguration.getSqlProviderName())) {
+            sb.append(tableConfiguration.getSqlProviderName());
+        } else {
+            sb.append(fullyQualifiedTable.getDomainObjectName());
+            sb.append("SqlProvider"); //$NON-NLS-1$
+        }
         setMyBatis3SqlProviderType(sb.toString());
     }
 
@@ -1352,7 +1369,7 @@ public abstract class IntrospectedTable {
 
         StringBuilder sb = new StringBuilder();
         sb.append(config.getTargetPackage());
-        sb.append(fullyQualifiedTable.getSubPackage(isSubPackagesEnabled(config)));
+        sb.append(fullyQualifiedTable.getSubPackageForModel(isSubPackagesEnabled(config)));
 
         return sb.toString();
     }
@@ -1404,7 +1421,14 @@ public abstract class IntrospectedTable {
         // config can be null if the Java client does not require XML
         if (config != null) {
             sb.append(config.getTargetPackage());
-            sb.append(fullyQualifiedTable.getSubPackage(isSubPackagesEnabled(config)));
+            sb.append(fullyQualifiedTable.getSubPackageForClientOrSqlMap(isSubPackagesEnabled(config)));
+            if (stringHasValue(tableConfiguration.getMapperName())) {
+                String mapperName = tableConfiguration.getMapperName();
+                int ind = mapperName.lastIndexOf('.');
+                if (ind != -1) {
+                    sb.append('.').append(mapperName.substring(0, ind));
+                }
+            }
         }
 
         return sb.toString();
@@ -1429,8 +1453,19 @@ public abstract class IntrospectedTable {
      */
     protected String calculateMyBatis3XmlMapperFileName() {
         StringBuilder sb = new StringBuilder();
-        sb.append(fullyQualifiedTable.getDomainObjectName());
-        sb.append("Mapper.xml"); //$NON-NLS-1$
+        if (stringHasValue(tableConfiguration.getMapperName())) {
+            String mapperName = tableConfiguration.getMapperName();
+            int ind = mapperName.lastIndexOf('.');
+            if (ind == -1) {
+                sb.append(mapperName);
+            } else {
+                sb.append(mapperName.substring(ind + 1));
+            }
+            sb.append(".xml"); //$NON-NLS-1$
+        } else {
+            sb.append(fullyQualifiedTable.getDomainObjectName());
+            sb.append("Mapper.xml"); //$NON-NLS-1$
+        }
         return sb.toString();
     }
 
@@ -1452,8 +1487,12 @@ public abstract class IntrospectedTable {
         StringBuilder sb = new StringBuilder();
         sb.append(calculateSqlMapPackage());
         sb.append('.');
-        sb.append(fullyQualifiedTable.getDomainObjectName());
-        sb.append("Mapper"); //$NON-NLS-1$
+        if (stringHasValue(tableConfiguration.getMapperName())) {
+            sb.append(tableConfiguration.getMapperName());
+        } else {
+            sb.append(fullyQualifiedTable.getDomainObjectName());
+            sb.append("Mapper"); //$NON-NLS-1$
+        }
         return sb.toString();
     }
 
@@ -1854,4 +1893,20 @@ public abstract class IntrospectedTable {
     public Context getContext() {
         return context;
     }
+
+	public String getRemarks() {
+		return remarks;
+	}
+
+	public void setRemarks(String remarks) {
+		this.remarks = remarks;
+	}
+
+	public String getTableType() {
+		return tableType;
+	}
+
+	public void setTableType(String tableType) {
+		this.tableType = tableType;
+	}
 }

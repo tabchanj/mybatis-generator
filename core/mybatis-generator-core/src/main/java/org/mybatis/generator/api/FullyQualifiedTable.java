@@ -1,17 +1,17 @@
-/*
- *  Copyright 2005 The Apache Software Foundation
+/**
+ *    Copyright 2006-2016 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *       http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 package org.mybatis.generator.api;
 
@@ -321,14 +321,18 @@ public class FullyQualifiedTable {
     }
 
     /**
-     * Calculates a Java package fragment based on the table catalog and schema. If qualifiers are ignored, then this
-     * method will return an empty string
+     * Calculates a Java package fragment based on the table catalog and schema.
+     * If qualifiers are ignored, then this method will return an empty string.
+     * 
+     * This method is used for determining the sub package for Java client and 
+     * SQL map (XML) objects.  It ignores any sub-package added to the
+     * domain object name in the table configuration.
      *
      * @param isSubPackagesEnabled
      *            the is sub packages enabled
      * @return the subpackage for this table
      */
-    public String getSubPackage(boolean isSubPackagesEnabled) {
+    public String getSubPackageForClientOrSqlMap(boolean isSubPackagesEnabled) {
         StringBuilder sb = new StringBuilder();
         if (!ignoreQualifiersAtRuntime && isSubPackagesEnabled) {
             if (stringHasValue(runtimeCatalog)) {
@@ -348,12 +352,31 @@ public class FullyQualifiedTable {
             }
         }
         
+        // TODO - strip characters that are not valid in package names
+        return sb.toString();
+    }
+
+    /**
+     * Calculates a Java package fragment based on the table catalog and schema.
+     * If qualifiers are ignored, then this method will return an empty string.
+     * 
+     * This method is used for determining the sub package for Java model objects only.
+     * It takes into account the possibility that a sub-package was added to the
+     * domain object name in the table configuration.
+     *
+     * @param isSubPackagesEnabled
+     *            the is sub packages enabled
+     * @return the subpackage for this table
+     */
+    public String getSubPackageForModel(boolean isSubPackagesEnabled) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getSubPackageForClientOrSqlMap(isSubPackagesEnabled));
+        
         if (stringHasValue(domainObjectSubPackage)) {
             sb.append('.');
             sb.append(domainObjectSubPackage);
         }
 
-        // TODO - strip characters that are not valid in package names
         return sb.toString();
     }
 

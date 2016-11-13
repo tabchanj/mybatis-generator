@@ -1,19 +1,18 @@
-/*
- *  Copyright 2011 The MyBatis Team
+/**
+ *    Copyright 2006-2016 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *       http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
-
 package mbg.test.mb3.mixed.conditional;
 
 import static mbg.test.common.util.TestUtilities.blobsAreEqual;
@@ -231,7 +230,7 @@ public class ConditionalJava5Test extends AbstractMixedConditionalTest {
 
             FieldsonlyExample example = new FieldsonlyExample();
             example.createCriteria().andIntegerfieldGreaterThan(5);
-            int rows = mapper.countByExample(example);
+            long rows = mapper.countByExample(example);
             assertEquals(2, rows);
 
             example.clear();
@@ -415,7 +414,7 @@ public class ConditionalJava5Test extends AbstractMixedConditionalTest {
 
             PkonlyExample example = new PkonlyExample();
             example.createCriteria().andIdGreaterThan(4);
-            int rows = mapper.countByExample(example);
+            long rows = mapper.countByExample(example);
             assertEquals(2, rows);
 
             example.clear();
@@ -1245,7 +1244,7 @@ public class ConditionalJava5Test extends AbstractMixedConditionalTest {
 
             PkfieldsExample example = new PkfieldsExample();
             example.createCriteria().andLastnameLike("J%");
-            int rows = mapper.countByExample(example);
+            long rows = mapper.countByExample(example);
             assertEquals(1, rows);
 
             example.clear();
@@ -1546,7 +1545,7 @@ public class ConditionalJava5Test extends AbstractMixedConditionalTest {
 
             PkblobsExample example = new PkblobsExample();
             example.createCriteria().andIdLessThan(4);
-            int rows = mapper.countByExample(example);
+            long rows = mapper.countByExample(example);
             assertEquals(1, rows);
 
             example.clear();
@@ -1952,7 +1951,7 @@ public class ConditionalJava5Test extends AbstractMixedConditionalTest {
 
             PkfieldsblobsExample example = new PkfieldsblobsExample();
             example.createCriteria().andId1NotEqualTo(3);
-            int rows = mapper.countByExample(example);
+            long rows = mapper.countByExample(example);
             assertEquals(1, rows);
 
             example.clear();
@@ -2157,7 +2156,7 @@ public class ConditionalJava5Test extends AbstractMixedConditionalTest {
 
             FieldsblobsExample example = new FieldsblobsExample();
             example.createCriteria().andFirstnameLike("S%");
-            int rows = mapper.countByExample(example);
+            long rows = mapper.countByExample(example);
             assertEquals(1, rows);
 
             example.clear();
@@ -3209,7 +3208,7 @@ public class ConditionalJava5Test extends AbstractMixedConditionalTest {
 
             AwfulTableExample example = new AwfulTableExample();
             example.createCriteria().andEMailLike("fred@%");
-            int rows = mapper.countByExample(example);
+            long rows = mapper.countByExample(example);
             assertEquals(1, rows);
 
             example.clear();

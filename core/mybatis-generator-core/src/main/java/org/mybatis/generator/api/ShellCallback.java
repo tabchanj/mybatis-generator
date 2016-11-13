@@ -1,17 +1,17 @@
-/*
- *  Copyright 2005 The Apache Software Foundation
+/**
+ *    Copyright 2006-2016 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *       http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 package org.mybatis.generator.api;
 
@@ -86,8 +86,8 @@ public interface ShellCallback {
      * 
      * @param newFileSource
      *            the source of the newly generated Java file
-     * @param existingFileFullPath
-     *            the fully qualified path name of the existing Java file
+     * @param existingFile
+     *            the existing Java file
      * @param javadocTags
      *            the JavaDoc tags that denotes which methods and fields in the
      *            old file to delete (if the Java element has any of these tags,
@@ -103,7 +103,7 @@ public interface ShellCallback {
      *             existing file will remain undisturbed. The generator will add the
      *             exception message to the list of warnings automatically.
      */
-    String mergeJavaFile(String newFileSource, String existingFileFullPath,
+    String mergeJavaFile(String newFileSource, File existingFile,
             String[] javadocTags, String fileEncoding) throws ShellException;
 
     /**

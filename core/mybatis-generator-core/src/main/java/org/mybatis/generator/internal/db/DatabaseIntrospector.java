@@ -1,17 +1,17 @@
-/*
- *  Copyright 2005 The Apache Software Foundation
+/**
+ *    Copyright 2006-2016 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *       http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 package org.mybatis.generator.internal.db;
 
@@ -26,6 +26,7 @@ import static org.mybatis.generator.internal.util.messages.Messages.getString;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -151,7 +152,6 @@ public class DatabaseIntrospector {
                 rs.close();
             } catch (SQLException e) {
                 // ignore
-                ;
             }
         }
     }
@@ -281,7 +281,7 @@ public class DatabaseIntrospector {
             Map<ActualTableName, List<IntrospectedColumn>> columns) {
         for (Map.Entry<ActualTableName, List<IntrospectedColumn>> entry : columns
                 .entrySet()) {
-            Iterator<IntrospectedColumn> tableColumns = (entry.getValue())
+            Iterator<IntrospectedColumn> tableColumns = entry.getValue()
                     .iterator();
             while (tableColumns.hasNext()) {
                 IntrospectedColumn introspectedColumn = tableColumns.next();
@@ -368,11 +368,10 @@ public class DatabaseIntrospector {
 
                     ColumnOverride co = tc.getColumnOverride(introspectedColumn
                             .getActualColumnName());
-                    if (co != null) {
-                        if (stringHasValue(co.getJavaType())
-                                && stringHasValue(co.getJavaType())) {
-                            warn = false;
-                        }
+                    if (co != null
+                            && stringHasValue(co.getJavaType())
+                            && stringHasValue(co.getJavaType())) {
+                        warn = false;
                     }
 
                     // if the type is not supported, then we'll report a warning
@@ -391,11 +390,10 @@ public class DatabaseIntrospector {
                     }
                 }
 
-                if (context.autoDelimitKeywords()) {
-                    if (SqlReservedWords.containsWord(introspectedColumn
+                if (context.autoDelimitKeywords()
+                    && SqlReservedWords.containsWord(introspectedColumn
                             .getActualColumnName())) {
-                        introspectedColumn.setColumnNameDelimited(true);
-                    }
+                    introspectedColumn.setColumnNameDelimited(true);
                 }
 
                 if (tc.isAllColumnDelimitingEnabled()) {
@@ -506,9 +504,12 @@ public class DatabaseIntrospector {
                     if (columnOverride.isColumnNameDelimited()) {
                         introspectedColumn.setColumnNameDelimited(true);
                     }
+                    
+                    introspectedColumn.setGeneratedAlways(columnOverride.isGeneratedAlways());
 
                     introspectedColumn.setProperties(columnOverride
                             .getProperties());
+                    
                 }
             }
         }
@@ -599,7 +600,20 @@ public class DatabaseIntrospector {
         }
 
         ResultSet rs = databaseMetaData.getColumns(localCatalog, localSchema,
-                localTableName, null);
+                localTableName, "%"); //$NON-NLS-1$
+        
+        boolean supportsIsAutoIncrement = false;
+        boolean supportsIsGeneratedColumn = false;
+        ResultSetMetaData rsmd = rs.getMetaData();
+        int colCount = rsmd.getColumnCount();
+        for (int i = 1; i <= colCount; i++) {
+            if ("IS_AUTOINCREMENT".equals(rsmd.getColumnName(i))) { //$NON-NLS-1$
+                supportsIsAutoIncrement = true;
+            }
+            if ("IS_GENERATEDCOLUMN".equals(rsmd.getColumnName(i))) { //$NON-NLS-1$
+                supportsIsGeneratedColumn = true;
+            }
+        }
 
         while (rs.next()) {
             IntrospectedColumn introspectedColumn = ObjectFactory
@@ -614,6 +628,14 @@ public class DatabaseIntrospector {
             introspectedColumn.setScale(rs.getInt("DECIMAL_DIGITS")); //$NON-NLS-1$
             introspectedColumn.setRemarks(rs.getString("REMARKS")); //$NON-NLS-1$
             introspectedColumn.setDefaultValue(rs.getString("COLUMN_DEF")); //$NON-NLS-1$
+            
+            if (supportsIsAutoIncrement) {
+                introspectedColumn.setAutoIncrement("YES".equals(rs.getString("IS_AUTOINCREMENT"))); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            
+            if (supportsIsGeneratedColumn) {
+                introspectedColumn.setGeneratedColumn("YES".equals(rs.getString("IS_GENERATEDCOLUMN"))); //$NON-NLS-1$ //$NON-NLS-2$
+            }
 
             ActualTableName atn = new ActualTableName(
                     rs.getString("TABLE_CAT"), //$NON-NLS-1$
@@ -717,10 +739,38 @@ public class DatabaseIntrospector {
             }
 
             calculatePrimaryKey(table, introspectedTable);
+            
+            enhanceIntrospectedTable(introspectedTable);
 
             answer.add(introspectedTable);
         }
 
         return answer;
+    }
+
+    /**
+     * This method calls database metadata to retrieve some extra information about the table
+     * such as remarks associated with the table and the type.
+     * 
+     * If there is any error, we just add a warning and continue.
+     * 
+     * @param introspectedTable
+     */
+    private void enhanceIntrospectedTable(IntrospectedTable introspectedTable) {
+        try {
+            FullyQualifiedTable fqt = introspectedTable.getFullyQualifiedTable();
+
+            ResultSet rs = databaseMetaData.getTables(fqt.getIntrospectedCatalog(), fqt.getIntrospectedSchema(),
+                    fqt.getIntrospectedTableName(), null);
+            if (rs.next()) {
+                String remarks = rs.getString("REMARKS"); //$NON-NLS-1$
+                String tableType = rs.getString("TABLE_TYPE"); //$NON-NLS-1$
+                introspectedTable.setRemarks(remarks);
+                introspectedTable.setTableType(tableType);
+            }
+            closeResultSet(rs);
+        } catch (SQLException e) {
+            warnings.add(getString("Warning.27", e.getMessage())); //$NON-NLS-1$
+        }
     }
 }

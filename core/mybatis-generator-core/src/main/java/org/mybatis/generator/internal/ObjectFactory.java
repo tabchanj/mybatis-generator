@@ -1,17 +1,17 @@
-/*
- *  Copyright 2005 The Apache Software Foundation
+/**
+ *    Copyright 2006-2016 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *       http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 package org.mybatis.generator.internal;
 
@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.mybatis.generator.api.CommentGenerator;
+import org.mybatis.generator.api.ConnectionFactory;
 import org.mybatis.generator.api.FullyQualifiedTable;
 import org.mybatis.generator.api.JavaFormatter;
 import org.mybatis.generator.api.Plugin;
@@ -37,13 +38,13 @@ import org.mybatis.generator.codegen.ibatis2.IntrospectedTableIbatis2Java5Impl;
 import org.mybatis.generator.codegen.mybatis3.IntrospectedTableMyBatis3Impl;
 import org.mybatis.generator.codegen.mybatis3.IntrospectedTableMyBatis3SimpleImpl;
 import org.mybatis.generator.config.CommentGeneratorConfiguration;
+import org.mybatis.generator.config.ConnectionFactoryConfiguration;
 import org.mybatis.generator.config.Context;
 import org.mybatis.generator.config.PluginConfiguration;
 import org.mybatis.generator.config.JavaTypeResolverConfiguration;
 import org.mybatis.generator.config.PropertyRegistry;
 import org.mybatis.generator.config.TableConfiguration;
 import org.mybatis.generator.internal.types.JavaTypeResolverDefaultImpl;
-import org.mybatis.generator.internal.util.StringUtility;
 
 /**
  * This class creates the different objects needed by the generator.
@@ -62,12 +63,24 @@ public class ObjectFactory {
     	externalClassLoaders = new ArrayList<ClassLoader>();
         resourceClassLoaders = new ArrayList<ClassLoader>();
     }
-
+    
     /**
      * Utility class. No instances allowed
      */
     private ObjectFactory() {
         super();
+    }
+
+    /**
+     * Clears the class loaders.  This method should be called at the beginning of
+     * a generation run so that and change to the classloading configuration
+     * will be reflected.  For example, if the eclipse launcher changes configuration
+     * it might not be updated if eclipse hasn't been restarted.
+     * 
+     */
+    public static void reset() {
+        externalClassLoaders.clear();
+        resourceClassLoaders.clear();
     }
 
     /**
@@ -117,7 +130,6 @@ public class ObjectFactory {
                 return clazz;
             } catch (Throwable e) {
                 // ignore - fail safe below
-                ;
             }
         }
         
@@ -305,6 +317,28 @@ public class ObjectFactory {
         return answer;
     }
 
+    public static ConnectionFactory createConnectionFactory(Context context) {
+
+        ConnectionFactoryConfiguration config = context
+                .getConnectionFactoryConfiguration();
+        ConnectionFactory answer;
+
+        String type;
+        if (config == null || config.getConfigurationType() == null) {
+            type = JDBCConnectionFactory.class.getName();
+        } else {
+            type = config.getConfigurationType();
+        }
+
+        answer = (ConnectionFactory) createInternalObject(type);
+
+        if (config != null) {
+            answer.addConfigurationProperties(config.getProperties());
+        }
+
+        return answer;
+    }
+
     /**
      * Creates a new Object object.
      *
@@ -314,7 +348,7 @@ public class ObjectFactory {
      */
     public static JavaFormatter createJavaFormatter(Context context) {
         String type = context.getProperty(PropertyRegistry.CONTEXT_JAVA_FORMATTER);
-        if (!StringUtility.stringHasValue(type)) {
+        if (!stringHasValue(type)) {
             type = DefaultJavaFormatter.class.getName();
         }
 
@@ -334,7 +368,7 @@ public class ObjectFactory {
      */
     public static XmlFormatter createXmlFormatter(Context context) {
         String type = context.getProperty(PropertyRegistry.CONTEXT_XML_FORMATTER);
-        if (!StringUtility.stringHasValue(type)) {
+        if (!stringHasValue(type)) {
             type = DefaultXmlFormatter.class.getName();
         }
 

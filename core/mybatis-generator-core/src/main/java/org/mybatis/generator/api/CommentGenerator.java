@@ -1,17 +1,17 @@
-/*
- *  Copyright 2008 The Apache Software Foundation
+/**
+ *    Copyright 2006-2016 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *       http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 package org.mybatis.generator.api;
 
@@ -22,6 +22,7 @@ import org.mybatis.generator.api.dom.java.Field;
 import org.mybatis.generator.api.dom.java.InnerClass;
 import org.mybatis.generator.api.dom.java.InnerEnum;
 import org.mybatis.generator.api.dom.java.Method;
+import org.mybatis.generator.api.dom.java.TopLevelClass;
 import org.mybatis.generator.api.dom.xml.XmlElement;
 
 /**
@@ -48,7 +49,7 @@ public interface CommentGenerator {
      * is used to hold the value of the specified column.
      * <p>
      * 
-     * <b>Important:</b> This method should add a the nonstandard JavaDoc tag "@mbggenerated" to the comment. Without
+     * <b>Important:</b> This method should add a the nonstandard JavaDoc tag "@mbg.generated" to the comment. Without
      * this tag, the Eclipse based Java merge feature will fail.
      *
      * @param field
@@ -58,7 +59,7 @@ public interface CommentGenerator {
      * @param introspectedColumn
      *            the introspected column
      */
-    public void addFieldComment(Field field,
+    void addFieldComment(Field field,
             IntrospectedTable introspectedTable,
             IntrospectedColumn introspectedColumn);
 
@@ -70,21 +71,39 @@ public interface CommentGenerator {
      * @param introspectedTable
      *            the introspected table
      */
-    public void addFieldComment(Field field, IntrospectedTable introspectedTable);
+    void addFieldComment(Field field, IntrospectedTable introspectedTable);
 
     /**
-     * Adds the class comment.
+     * Adds a comment for a model class.  The Java code merger should
+     * be notified not to delete the entire class in case any manual
+     * changes have been made.  So this method will always use the 
+     * "do not delete" annotation.
+     * 
+     * Because of difficulties with the Java file merger, the default implementation
+     * of this method should NOT add comments.  Comments should only be added if
+     * specifically requested by the user (for example, by enabling table remark comments).
+     *
+     * @param topLevelClass
+     *            the top level class
+     * @param introspectedTable
+     *            the introspected table
+     */
+    void addModelClassComment(TopLevelClass topLevelClass,
+            IntrospectedTable introspectedTable);
+
+    /**
+     * Adds the inner class comment.
      *
      * @param innerClass
      *            the inner class
      * @param introspectedTable
      *            the introspected table
      */
-    public void addClassComment(InnerClass innerClass,
+    void addClassComment(InnerClass innerClass,
             IntrospectedTable introspectedTable);
 
     /**
-     * Adds the class comment.
+     * Adds the inner class comment.
      *
      * @param innerClass
      *            the inner class
@@ -93,7 +112,7 @@ public interface CommentGenerator {
      * @param markAsDoNotDelete
      *            the mark as do not delete
      */
-    public void addClassComment(InnerClass innerClass,
+    void addClassComment(InnerClass innerClass,
             IntrospectedTable introspectedTable, boolean markAsDoNotDelete);
 
     /**
@@ -104,7 +123,7 @@ public interface CommentGenerator {
      * @param introspectedTable
      *            the introspected table
      */
-    public void addEnumComment(InnerEnum innerEnum,
+    void addEnumComment(InnerEnum innerEnum,
             IntrospectedTable introspectedTable);
 
     /**
@@ -117,7 +136,7 @@ public interface CommentGenerator {
      * @param introspectedColumn
      *            the introspected column
      */
-    public void addGetterComment(Method method,
+    void addGetterComment(Method method,
             IntrospectedTable introspectedTable,
             IntrospectedColumn introspectedColumn);
 
@@ -131,7 +150,7 @@ public interface CommentGenerator {
      * @param introspectedColumn
      *            the introspected column
      */
-    public void addSetterComment(Method method,
+    void addSetterComment(Method method,
             IntrospectedTable introspectedTable,
             IntrospectedColumn introspectedColumn);
 
@@ -143,7 +162,7 @@ public interface CommentGenerator {
      * @param introspectedTable
      *            the introspected table
      */
-    public void addGeneralMethodComment(Method method,
+    void addGeneralMethodComment(Method method,
             IntrospectedTable introspectedTable);
 
     /**
@@ -158,7 +177,7 @@ public interface CommentGenerator {
      * @param compilationUnit
      *            the compilation unit
      */
-    public void addJavaFileComment(CompilationUnit compilationUnit);
+    void addJavaFileComment(CompilationUnit compilationUnit);
 
     /**
      * This method should add a suitable comment as a child element of the specified xmlElement to warn users that the
@@ -167,7 +186,7 @@ public interface CommentGenerator {
      * @param xmlElement
      *            the xml element
      */
-    public void addComment(XmlElement xmlElement);
+    void addComment(XmlElement xmlElement);
 
     /**
      * This method is called to add a comment as the first child of the root element. This method could be used to add a
@@ -180,5 +199,5 @@ public interface CommentGenerator {
      * @param rootElement
      *            the root element
      */
-    public void addRootComment(XmlElement rootElement);
+    void addRootComment(XmlElement rootElement);
 }
